@@ -119,11 +119,13 @@ func saveApp(r *http.Request, dir string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("create: %w", err)
 	}
+	defer f.Close()
 
 	n, err := io.Copy(f, r.Body)
 	if err != nil {
 		return "", fmt.Errorf("save app %s: %w", appname, err)
 	}
+	f.Close()
 
 	log.Println("uploaded", fname, n, "bytes")
 

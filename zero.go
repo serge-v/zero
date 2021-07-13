@@ -29,8 +29,9 @@ func addFiles(values url.Values, patterns []string) error {
 	return nil
 }
 
-//var durl = "https://zero.voilokov.com/"
-var durl = "http://127.0.0.1:8099/"
+var durl = "https://zero.voilokov.com/"
+
+//var durl = "http://127.0.0.1:8099/"
 
 func Deploy(port int) error {
 	fname, err := buildApp()
@@ -85,6 +86,8 @@ func buildApp() (string, error) {
 	outname := filepath.Join(outdir, appname)
 
 	cmd := exec.Command("go", "build", "-ldflags", "-X main.compileDate="+time.Now().Format("2006-01-02T15:04:05"), "-o", outname)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "GOOS=linux", "GOARCH=amd64")
 	log.Println("building:", dir, cmd.Args)
 
 	buf, err := cmd.CombinedOutput()
