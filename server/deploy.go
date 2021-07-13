@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"sync"
 )
 
 func HandleDeployRequest(w http.ResponseWriter, r *http.Request) {
@@ -21,20 +20,6 @@ func HandleDeployRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-
-var (
-	appLock sync.Mutex
-	apps    = make(map[string]http.Handler)
-)
-
-func createProxy(appname string, port int) http.Handler {
-	addr := fmt.Sprintf("http://127.0.0.1:%d/%s/", port, appname)
-	u, err := url.Parse(addr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return httputil.NewSingleHostReverseProxy(u)
 }
 
 func handleDeploy(w http.ResponseWriter, r *http.Request) error {
@@ -46,17 +31,9 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 
 	dir := "/tmp/apps/"
 
-	var err error
-	var port int
-
-	s := r.URL.Query().Get("port")
-	if s == "" {
-		return fmt.Errorf("invalid port")
-	}
-
-	port, err = strconv.Atoi(s)
+	port, err := getPort(r)
 	if err != nil {
-		return fmt.Errorf("parse port: %w", err)
+		return err
 	}
 
 	appname, err := saveTempApp(r, dir)
@@ -188,4 +165,29 @@ func cleanOnExit(cmd *exec.Cmd, pidfile string) {
 	} else {
 		log.Println("pid removed for", cmd.Path)
 	}
+}
+
+func createProxy(appname string, port int) http.Handler {
+	addr := fmt.Sprintf("http://127.0.0.1:%d/%s/", port, appname)
+	u, err := url.Parse(addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return httputil.NewSingleHostReverseProxy(u)
+}
+
+func getPort(r *http.Request) (int, error) {
+	var err error
+	var port int
+
+	s := r.URL.Query().Get("port")
+	if s == "" {
+		return 0, fmt.Errorf("invalid port")
+	}
+
+	port, err = strconv.Atoi(s)
+	if err != nil {
+		return 0, fmt.Errorf("parse port: %w", err)
+	}
+	return port, nil
 }

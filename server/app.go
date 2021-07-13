@@ -6,6 +6,12 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
+)
+
+var (
+	appLock sync.Mutex
+	apps    = make(map[string]http.Handler)
 )
 
 func HandleAppRequest(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +45,11 @@ func handleApp(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 	appname := cc[0]
+
+	appLock.Lock()
 	handler := apps[appname]
+	appLock.Unlock()
+
 	if handler == nil {
 		log.Println("not found", r.URL.Path)
 		http.NotFound(w, r)

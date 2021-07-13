@@ -1,11 +1,14 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"text/template"
+
+	_ "embed"
 
 	"github.com/serge-v/zero"
 )
@@ -23,7 +26,6 @@ func main() {
 		return
 	}
 
-	log.Println("=== test app on 127.0.0.1:8091")
 	http.HandleFunc("/", handler)
 	err := http.ListenAndServe("127.0.0.1:8091", nil)
 	if err != nil {
@@ -31,8 +33,27 @@ func main() {
 	}
 }
 
+//go:embed *.go go.mod
+var files embed.FS
+
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "<h1>Test</h1>")
-	fmt.Fprintln(w, "<p>compiled", compileDate)
-	fmt.Fprintln(w, "<p>now", time.Now())
+	fmt.Fprintln(w, "<h1>This is test application</h1>")
+	fmt.Fprintln(w, "<p>compiledDate", compileDate)
+
+	dirs, err := files.ReadDir(".")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for _, de := range dirs {
+		fmt.Fprintf(w, "<h3>%s</h3>\n", de.Name())
+		buf, err := files.ReadFile(de.Name())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "<pre>%s</pre>\n\n", template.HTMLEscapeString(string(buf)))
+	}
 }
