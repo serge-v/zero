@@ -23,7 +23,7 @@ func TestDeploy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := Deploy()
+	err := Deploy(8091)
 	if err != nil {
 		t.Fatal(err)
 	}

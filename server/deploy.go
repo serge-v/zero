@@ -6,10 +6,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"sync"
 )
 
 func HandleDeployRequest(w http.ResponseWriter, r *http.Request) {
@@ -20,11 +23,40 @@ func HandleDeployRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleDeploy(w http.ResponseWriter, r *http.Request) error {
-	dir := "/tmp/builder/"
+var (
+	appLock sync.Mutex
+	apps    = make(map[string]http.Handler)
+)
 
-	if err := saveFiles(r, dir); err != nil {
-		return fmt.Errorf("deploy: %w", err)
+func createProxy(appname string, port int) http.Handler {
+	addr := fmt.Sprintf("http://127.0.0.1:%d/%s/", port, appname)
+	u, err := url.Parse(addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return httputil.NewSingleHostReverseProxy(u)
+}
+
+func handleDeploy(w http.ResponseWriter, r *http.Request) error {
+	token := os.Getenv("TOKEN")
+	rtoken := r.URL.Query().Get("token")
+	if rtoken == "" || token != rtoken {
+		return fmt.Errorf("invalid token")
+	}
+
+	dir := "/tmp/apps/"
+
+	var err error
+	var port int
+
+	s := r.URL.Query().Get("port")
+	if s == "" {
+		return fmt.Errorf("invalid port")
+	}
+
+	port, err = strconv.Atoi(s)
+	if err != nil {
+		return fmt.Errorf("parse port: %w", err)
 	}
 
 	appname, err := saveApp(r, dir)
@@ -56,6 +88,15 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 
 	go cleanOnExit(cmd, pidfile)
 
+	appLock.Lock()
+	defer appLock.Unlock()
+
+	handler := apps[appname]
+	if handler == nil {
+		apps[appname] = createProxy(appname, port)
+		log.Println("proxy created for app", appname, "port", port)
+	}
+
 	return nil
 }
 
@@ -84,7 +125,11 @@ func saveApp(r *http.Request, dir string) (string, error) {
 		return "", fmt.Errorf("save app %s: %w", appname, err)
 	}
 
-	log.Println("uploaded", appname, n, "bytes")
+	log.Println("uploaded", fname, n, "bytes")
+
+	if err := os.Chmod(fname, 0700); err != nil {
+		return "", fmt.Errorf("chmod: %w", err)
+	}
 
 	return appname, nil
 }

@@ -29,9 +29,10 @@ func addFiles(values url.Values, patterns []string) error {
 	return nil
 }
 
-var durl = "http://127.0.0.1:8088/"
+//var durl = "https://zero.voilokov.com/"
+var durl = "http://127.0.0.1:8099/"
 
-func Deploy() error {
+func Deploy(port int) error {
 	fname, err := buildApp()
 	if err != nil {
 		return fmt.Errorf("build: %w", err)
@@ -44,13 +45,20 @@ func Deploy() error {
 	}
 	defer f.Close()
 
-	resp, err := http.Post(durl+"?appname="+appname, "application/octet-stream", f)
+	buf, err := ioutil.ReadFile("token~.txt")
+	if err != nil {
+		return fmt.Errorf("read token: %w", err)
+	}
+	token := string(buf)
+
+	params := fmt.Sprintf("deploy?appname=%s&token=%s&port=%d", appname, token, port)
+	resp, err := http.Post(durl+params, "application/octet-stream", f)
 	if err != nil {
 		return fmt.Errorf("post to %s: %w", durl, err)
 	}
 	defer resp.Body.Close()
 
-	buf, err := ioutil.ReadAll(resp.Body)
+	buf, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("read all: %w", err)
 	}
