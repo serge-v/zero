@@ -59,7 +59,7 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("parse port: %w", err)
 	}
 
-	appname, err := saveApp(r, dir)
+	appname, err := saveTempApp(r, dir)
 	if err != nil {
 		return fmt.Errorf("appname: %w", err)
 	}
@@ -68,6 +68,10 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 	if err := stopApp(pidfile); err != nil {
 		log.Println(err)
 		os.Remove(pidfile)
+	}
+
+	if err := os.Rename(dir+appname+".tmp", dir+appname); err != nil {
+		return fmt.Errorf("cannot rename tmp app: %w", err)
 	}
 
 	cmd := exec.Command("./" + appname)
@@ -100,7 +104,7 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func saveApp(r *http.Request, dir string) (string, error) {
+func saveTempApp(r *http.Request, dir string) (string, error) {
 	if err := r.ParseForm(); err != nil {
 		return "", fmt.Errorf("parse form: %w", err)
 	}
@@ -114,7 +118,7 @@ func saveApp(r *http.Request, dir string) (string, error) {
 		return "", fmt.Errorf("no appname parameter")
 	}
 
-	fname := filepath.Join(dir, appname)
+	fname := filepath.Join(dir, appname+".tmp")
 	f, err := os.Create(fname)
 	if err != nil {
 		return "", fmt.Errorf("create: %w", err)

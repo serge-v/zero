@@ -25,7 +25,7 @@ func handleApp(w http.ResponseWriter, r *http.Request) error {
 		}
 		sort.Strings(list)
 		for _, s := range list {
-			fmt.Fprintf(w, `<a href="/%s/">%s`+"\n", s, s)
+			fmt.Fprintf(w, `<a href="/%s/">%s</a><br>`+"\n", s, s)
 		}
 		return nil
 	}
