@@ -53,6 +53,7 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 
 	cmd := exec.Command("./" + appname)
 	cmd.Dir = dir
+	cmd.Env = []string{}
 	cmd.Stderr = os.Stderr
 
 	err = cmd.Start()
