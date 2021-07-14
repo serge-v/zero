@@ -29,7 +29,7 @@ func Email(from string, to []string, subject, body string) error {
 	log.Println(string(buf))
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid status: %d", resp.Status)
+		return fmt.Errorf("invalid status: %s", resp.Status)
 	}
 
 	return nil
