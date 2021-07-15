@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Email can be used to send an email from the app which runs on zero server.
 func Email(from string, to []string, subject, body string) error {
 	values := url.Values{}
 	values.Add("from", from)
