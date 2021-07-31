@@ -169,7 +169,7 @@ func cleanOnExit(cmd *exec.Cmd, pidfile string) {
 }
 
 func createProxy(appname string, port int) http.Handler {
-	addr := fmt.Sprintf("http://127.0.0.1:%d/%s/", port, appname)
+	addr := fmt.Sprintf("http://127.0.0.1:%d/", port)
 	u, err := url.Parse(addr)
 	if err != nil {
 		log.Fatal(err)

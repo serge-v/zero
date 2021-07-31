@@ -45,7 +45,7 @@ func handleApp(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 	appname := cc[0]
-
+	log.Println("appname", appname)
 	appLock.Lock()
 	handler := apps[appname]
 	appLock.Unlock()
@@ -56,6 +56,7 @@ func handleApp(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
+	handler = http.StripPrefix("/"+appname+"/", handler)
 	handler.ServeHTTP(w, r)
 	return nil
 }
