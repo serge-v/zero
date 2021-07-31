@@ -22,5 +22,5 @@ Add to your application:
 
 Run:
 
-	go build && ./myall -deploy
+	go build && ./myapp -deploy
 
