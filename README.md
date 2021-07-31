@@ -12,7 +12,7 @@ Add to your application:
 		flag.Parse()
 
 		if *deploy {
-			if err := zero.Deploy(); err != nil {
+			if err := zero.Deploy(8095); err != nil {
 				log.Fatal(err)
 			}
 		}
