@@ -37,7 +37,9 @@ func main() {
 	}
 
 	http.HandleFunc("/", handleRoot)
-	http.HandleFunc("/chart/chart/chart.png", handleChart)
+	http.HandleFunc("/chart.png", handleChart)
+	http.HandleFunc("/data.csv", handleCsv)
+	http.HandleFunc("/events.csv", handleEvents)
 
 	if err := http.ListenAndServe("127.0.0.1:8096", nil); err != nil {
 		log.Fatal(err)
@@ -54,6 +56,36 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 func handleChart(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
 	generateChart(w)
+}
+
+func handleEvents(w http.ResponseWriter, r *http.Request) {
+	now := time.Now().Truncate(time.Hour * 24).Add(time.Hour * 4)
+	fmt.Fprint(w, "time,event\n")
+	for i := -3; i < 1; i++ {
+		ts := now.Add(time.Hour * 24 * time.Duration(i))
+		fmt.Fprint(w, ts.Format(time.RFC3339), ",midnight", "\n")
+		ts = now.Add(time.Hour*24*time.Duration(i) + time.Hour*12)
+		fmt.Fprint(w, ts.Format(time.RFC3339), ",noon", "\n")
+	}
+}
+
+func handleCsv(w http.ResponseWriter, r *http.Request) {
+	lines, err := fetchSensorLog()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	records, err := parseLogLines(lines)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprint(w, "time,moisture,battery\n")
+	for _, r := range records {
+		fmt.Fprint(w, r.ts.Add(time.Hour*4).Format(time.RFC3339), ",", r.moisture, ",", fmt.Sprintf("%.2f", r.battery), "\n")
+	}
 }
 
 func saveChart(fname string) error {
@@ -88,12 +120,14 @@ func generateChart(w io.Writer) error {
 	}
 
 	var ygrid []chart.GridLine
-	for i := 100; i < 1000; i += 50 {
+	st := chart.Style{DotWidth: 1, DotColor: chart.ColorBlue, StrokeWidth: chart.Disabled}
+	for i := 300; i < 800; i += 50 {
 		ygrid = append(ygrid, chart.GridLine{Value: float64(i)})
+		ygrid = append(ygrid, chart.GridLine{Value: float64(i + 25), Style: st})
 	}
 
 	var yticks []chart.Tick
-	for i := 100; i < 1000; i += 50 {
+	for i := 300; i < 800; i += 50 {
 		yticks = append(yticks, chart.Tick{Value: float64(i), Label: fmt.Sprintf("%d", i)})
 	}
 

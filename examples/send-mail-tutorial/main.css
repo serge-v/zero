@@ -1,0 +1,13 @@
+body {
+    font-family: arial;
+    color: #333333;
+}
+gocode {
+    font-family: monospace;
+    display: block;
+    white-space: pre-wrap;
+    background-color: #BEEBCA;
+    width: 800px;
+    margin-left: 50px;
+    padding-left: 16px;
+}

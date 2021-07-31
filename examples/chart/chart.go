@@ -80,15 +80,17 @@ func dayEventsLines() []chart.GridLine {
 func xTicks() []chart.Tick {
 	var list []chart.Tick
 
-	start := time.Now().Truncate(time.Hour * 6).Add(-time.Hour * 6)
+	start := time.Now().Truncate(time.Hour * 12).Add(time.Hour * 12) // left border at 12 hours ahead
 
-	for i := 0; i < 3; i++ {
-		ts := start.Add(time.Hour * 24 * time.Duration(-i))
+	for i := -3; i < 1; i++ {
+		ts := start.Add(time.Hour * 24 * time.Duration(i))
 		line := chart.Tick{
 			Value: chart.TimeToFloat64(ts),
 			Label: ts.Format("1/02"),
 		}
 		list = append(list, line)
+
+		continue
 
 		ts = ts.Add(time.Hour * 6)
 		line = chart.Tick{
