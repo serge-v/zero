@@ -29,7 +29,7 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("invalid token")
 	}
 
-	dir := "/tmp/apps/"
+	dir := "/apps/"
 
 	port, err := getPort(r)
 	if err != nil {
