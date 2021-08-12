@@ -82,9 +82,9 @@ func handleCsv(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, "time,moisture,battery\n")
+	fmt.Fprint(w, "time,moisture,battery,hall\n")
 	for _, r := range records {
-		fmt.Fprint(w, r.ts.Add(time.Hour*4).Format(time.RFC3339), ",", r.moisture, ",", fmt.Sprintf("%.2f", r.battery), "\n")
+		fmt.Fprint(w, r.ts.Add(time.Hour*4).Format(time.RFC3339), ",", r.moisture, ",", fmt.Sprintf("%.2f", r.battery), ",", r.hall, "\n")
 	}
 }
 

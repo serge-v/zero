@@ -13,6 +13,7 @@ type record struct {
 	ts       time.Time
 	moisture int
 	battery  float64
+	hall     int
 }
 
 func fetchSensorLog() ([]string, error) {
@@ -53,6 +54,8 @@ func parseLogLines(lines []string) ([]record, error) {
 			switch kv[0] {
 			case "moisture":
 				r.moisture, _ = strconv.Atoi(kv[1])
+			case "hall":
+				r.hall, _ = strconv.Atoi(kv[1])
 			case "batv":
 				r.battery, _ = strconv.ParseFloat(strings.TrimSuffix(kv[1], "V"), 64)
 			}
