@@ -12,6 +12,7 @@ import (
 var (
 	appLock sync.Mutex
 	apps    = make(map[string]http.Handler)
+	ports   = make(map[string]int)
 )
 
 func HandleAppRequest(w http.ResponseWriter, r *http.Request) {

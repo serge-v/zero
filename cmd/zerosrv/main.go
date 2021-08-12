@@ -27,7 +27,11 @@ func main() {
 	if *debug {
 		addr = "127.0.0.1:8099"
 	}
-	log.Println("starting on", addr)
+
+	log.Println("starting apps")
+	server.StartApps()
+
+	log.Println("starting http server on", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
 	}

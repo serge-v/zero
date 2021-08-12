@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,8 @@ import (
 	"path/filepath"
 	"strconv"
 )
+
+const appsDir = "/apps/"
 
 func HandleDeployRequest(w http.ResponseWriter, r *http.Request) {
 	if err := handleDeploy(w, r); err != nil {
@@ -29,34 +32,42 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("invalid token")
 	}
 
-	dir := "/apps/"
-
 	port, err := getPort(r)
 	if err != nil {
 		return err
 	}
 
-	appname, err := saveTempApp(r, dir)
+	appname, err := saveTempApp(r, appsDir)
 	if err != nil {
 		return fmt.Errorf("appname: %w", err)
 	}
 
-	pidfile := dir + appname + ".pid"
+	pidfile := appsDir + appname + ".pid"
 	if err := stopApp(pidfile); err != nil {
 		log.Println(err)
 		os.Remove(pidfile)
 	}
 
-	if err := os.Rename(dir+appname+".tmp", dir+appname); err != nil {
+	if err := os.Rename(appsDir+appname+".tmp", appsDir+appname); err != nil {
 		return fmt.Errorf("cannot rename tmp app: %w", err)
 	}
 
+	if err := startApp(appname, port); err != nil {
+		return fmt.Errorf("start app: %w", err)
+	}
+
+	return nil
+}
+
+func startApp(appname string, port int) error {
+	pidfile := appsDir + appname + ".pid"
+
 	cmd := exec.Command("./" + appname)
-	cmd.Dir = dir
+	cmd.Dir = appsDir
 	cmd.Env = []string{}
 	cmd.Stderr = os.Stderr
 
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		return fmt.Errorf("start app %s: %w", appname, err)
 	}
@@ -78,8 +89,37 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 		apps[appname] = createProxy(appname, port)
 		log.Println("proxy created for app", appname, "port", port)
 	}
+	ports[appname] = port
+
+	buf, err := json.Marshal(ports)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+
+	if err := ioutil.WriteFile(appsDir+"ports.json", buf, 0o644); err != nil {
+		return fmt.Errorf(": %w", err)
+	}
 
 	return nil
+}
+
+func StartApps() {
+	buf, err := ioutil.ReadFile(appsDir + "ports.json")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := json.Unmarshal(buf, &ports); err != nil {
+		log.Println(err)
+		return
+	}
+
+	for appname, port := range ports {
+		if err := startApp(appname, port); err != nil {
+			log.Println(err)
+		}
+	}
 }
 
 func saveTempApp(r *http.Request, dir string) (string, error) {
