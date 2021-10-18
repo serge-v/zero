@@ -16,7 +16,9 @@ func buildApp(dir string) (string, error) {
 	cmd := exec.Command("go", "build", "-ldflags", "-X main.compileDate="+time.Now().Format("2006-01-02T15:04:05"))
 	cmd.Dir = dir
 	buf, err := cmd.CombinedOutput()
-	log.Println(string(buf))
+	if len(buf) > 0 {
+		log.Println(string(buf))
+	}
 	if err != nil {
 		return string(buf), fmt.Errorf("run compiler: %w", err)
 	}

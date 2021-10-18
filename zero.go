@@ -53,11 +53,12 @@ func Deploy(port int) error {
 
 // Log gets an app log from the zero server.
 func Log() (string, error) {
-	fname, err := buildApp()
+	dir, err := os.Getwd()
 	if err != nil {
-		return "", fmt.Errorf("build: %w", err)
+		return "", fmt.Errorf("cwd: %w", err)
 	}
-	appname := filepath.Base(fname)
+
+	appname := filepath.Base(dir)
 	token, err := getToken()
 	if err != nil {
 		return "", fmt.Errorf("read token: %w", err)
@@ -114,6 +115,6 @@ func buildApp() (string, error) {
 	if err != nil {
 		return string(buf), fmt.Errorf("run compiler: %w", err)
 	}
-	log.Println("uploaded:", outname)
+	log.Println("built:", outname)
 	return outname, nil
 }
