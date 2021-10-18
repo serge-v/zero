@@ -85,7 +85,7 @@ func handleCompileAndDeploy(w http.ResponseWriter, r *http.Request) error {
 
 	log.Println(appname, pid, "started")
 
-	go cleanOnExit(cmd, pidfile)
+	go cleanOnExit(cmd, pidfile, nil)
 
 	return nil
 }

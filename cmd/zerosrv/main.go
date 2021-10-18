@@ -22,6 +22,7 @@ func main() {
 	}()
 
 	http.HandleFunc("/deploy", server.HandleDeployRequest)
+	http.HandleFunc("/log", server.HandleLogRequest)
 	http.HandleFunc("/", server.HandleAppRequest)
 	addr := ":80"
 	if *debug {

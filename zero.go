@@ -13,8 +13,6 @@ import (
 
 var durl = "https://zero.voilokov.com/"
 
-//var durl = "http://127.0.0.1:8099/"
-
 // Deploy installs and starts golang app from the current directory to the zero server.
 func Deploy(port int) error {
 	fname, err := buildApp()
@@ -51,6 +49,37 @@ func Deploy(port int) error {
 	}
 
 	return nil
+}
+
+// Log gets an app log from the zero server.
+func Log() (string, error) {
+	fname, err := buildApp()
+	if err != nil {
+		return "", fmt.Errorf("build: %w", err)
+	}
+	appname := filepath.Base(fname)
+	token, err := getToken()
+	if err != nil {
+		return "", fmt.Errorf("read token: %w", err)
+	}
+
+	params := fmt.Sprintf("log?appname=%s&token=%s&port=%d", appname, token)
+	resp, err := http.Get(durl + params)
+	if err != nil {
+		return "", fmt.Errorf("post to %s: %w", durl, err)
+	}
+	defer resp.Body.Close()
+
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read all: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("status: %s, resp:\n%s\n", resp.Status, string(buf))
+	}
+
+	return string(buf), nil
 }
 
 func getToken() (string, error) {

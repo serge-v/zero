@@ -13,12 +13,21 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 const appsDir = "/apps/"
 
 func HandleDeployRequest(w http.ResponseWriter, r *http.Request) {
 	if err := handleDeploy(w, r); err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func HandleLogRequest(w http.ResponseWriter, r *http.Request) {
+	if err := handleLog(w, r); err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -59,15 +68,40 @@ func handleDeploy(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func handleLog(w http.ResponseWriter, r *http.Request) error {
+	token := os.Getenv("TOKEN")
+	rtoken := r.URL.Query().Get("token")
+	if rtoken == "" || token != rtoken {
+		return fmt.Errorf("invalid token")
+	}
+	appname := r.URL.Query().Get("appname")
+	if appname == "" {
+		return fmt.Errorf("no appname parameter")
+	}
+	appname = strings.ReplaceAll(appname, ".", "/")
+	logname := "/tmp/" + appname + ".log"
+	buf, _ := ioutil.ReadFile(logname)
+	w.Write(buf)
+
+	return nil
+}
+
 func startApp(appname string, port int) error {
 	pidfile := appsDir + appname + ".pid"
 
+	logname := "/tmp/" + appname + ".log"
+	logf, err := os.Create(logname)
+	if err != nil {
+		log.Println(err)
+		logf = os.Stderr
+	}
+
 	cmd := exec.Command("./" + appname)
 	cmd.Dir = appsDir
-	cmd.Env = []string{}
-	cmd.Stderr = os.Stderr
+	//	cmd.Env = []string{}
+	cmd.Stderr = logf
 
-	err := cmd.Start()
+	err = cmd.Start()
 	if err != nil {
 		return fmt.Errorf("start app %s: %w", appname, err)
 	}
@@ -79,7 +113,7 @@ func startApp(appname string, port int) error {
 
 	log.Println(appname, pid, "started")
 
-	go cleanOnExit(cmd, pidfile)
+	go cleanOnExit(cmd, pidfile, logf)
 
 	appLock.Lock()
 	defer appLock.Unlock()
@@ -132,6 +166,7 @@ func saveTempApp(r *http.Request, dir string) (string, error) {
 	}
 
 	appname := r.URL.Query().Get("appname")
+	appname = strings.ReplaceAll(appname, ".", "/")
 	if appname == "" {
 		return "", fmt.Errorf("no appname parameter")
 	}
@@ -196,10 +231,13 @@ func stopApp(pidfile string) error {
 	return nil
 }
 
-func cleanOnExit(cmd *exec.Cmd, pidfile string) {
+func cleanOnExit(cmd *exec.Cmd, pidfile string, logf io.Closer) {
 	err := cmd.Wait()
 	if err != nil {
 		log.Println(err)
+	}
+	if logf != nil && logf != os.Stderr {
+		logf.Close()
 	}
 	if err := os.Remove(pidfile); err != nil {
 		log.Println(cmd.Path, pidfile, err)

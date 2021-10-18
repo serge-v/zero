@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>golang-user-registration</title>
+    <link rel="stylesheet" href="main.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+
+<h1>How to make user registration in golang app</h1>
+
+<time>17 September 2021</time>
+<p>In this example we will create user registration for the website.</p>
+
+<h2>Demo</h2>
+You can view a demonstration of this example on <a href="/demo">demo page</a>.
+
+<h2>Create skeleton application</h2>
+We create http server with empty handlers. I added comments what each handler should do.
+<br>
+<br>
+<gocode>
+package main
+
+import "net/http"
+
+func main() {
+	http.HandleFunc("/", handleHomePage)
+	http.HandleFunc("/signup", handleSignup)
+	http.HandleFunc("/register", handleRegister)
+	http.HandleFunc("/confirm", handleConfirm)
+	http.HandleFunc("/signin", handleSignin)
+	http.HandleFunc("/login", handleLogin)
+
+	if err := http.ListenAndServe("127.0.0.1:8098", nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// handleHomePage should do:
+// - contains links to Signup and Signin pages
+func handleHomePage(w http.ResponseWriter, r *http.Request) {
+}
+
+// handleSignup should do:
+// - show signup form to the user
+// - on button click send form to the /register handler
+func handleSignup(w http.ResponseWriter, r *http.Request) {
+}
+
+// handleRegister should do:
+// - create non-active user record in DB with random hash
+// - send confirmation link by email to the user
+func handleRegister(w http.ResponseWriter, r *http.Request) {
+}
+
+// handleConfirm should do:
+// - if random hash matches activate the user
+func handleConfirm(w http.ResponseWriter, r *http.Request) {
+}
+
+// handleSignin should do:
+// - show login form to the user
+func handleSignin(w http.ResponseWriter, r *http.Request) {
+}
+
+// handleLogin should do:
+// - login active user
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+}
+
+</gocode>
+
+<h2>Implementing handleHomePage</h2>
+
+Homepage should contain 2 links to the user:
+<br><br>
+<gocode>
+
+func handleHomePage(w http.ResponseWriter, r *http.Request) {
+    
+}
+
+</gocode>
+
+<h2>The End</h2>
+
+</body>
+</html>
