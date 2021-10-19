@@ -10,7 +10,7 @@ import (
 )
 
 var deploy = flag.Int("deploy", 0, "port")
-var showLog = flag.Bool("log", false, "show log")
+var showLog = flag.Bool("log", true, "show log")
 
 func main() {
 	flag.Parse()
