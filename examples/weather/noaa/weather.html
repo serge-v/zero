@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<body>
+<table border="0" width="400px">
+	<tr style="background-color: lightsteelblue; border: solid 1px lightsteelblue; text-align: left;">
+		<th>HR&nbsp;&nbsp;</th>
+		<th colspan="2">AIR</th>
+		<th colspan="2">WIND</th>
+		<th colspan="2">PRECIP</th>
+		<th>CONDITIONS</th>
+	</tr>
+	<tr style="text-align: left;">
+		<th></th>
+		<th>T</th>
+		<th>CL</th>
+		<th>V</th>
+		<th>D</th>
+		<th>S</th>
+		<th>R</th>
+		<th></th>
+	</tr>
+	{{- range .Rows -}}
+	{{- if .Midnight}}
+	<tr>
+		<th colspan="8" style="border: lightsteelblue 1px solid; text-align: left;">{{.Date}}</th>
+	</tr>
+	{{- end -}}
+	{{if .HasData}}
+	<tr style="text-align: left;">
+		<td>{{.Hour}}</td>
+		<td>{{.Temperature.Apparent | colortemp}}</td>
+		<td>{{.Clouds | nozero}}</td>
+		<td>{{.Wind.Speed | nozero}}</td>
+		<td>{{.Wind.Direction | windchar}}</td>
+		<td>{{.Snow | nozeroprep}}</td>
+		<td>{{.Rain | nozeroprep}}</td>
+		<td>{{.Weather}} {{.Hazards}}</td>
+	</tr>
+	{{- end -}}
+	{{- else -}}
+	<tr><td>No data</td></tr>
+	{{- end -}}
+</table>
+<div>
+Legend:<br>
+Columns:<br>
+hour<br>
+apparent temperature, {{.Units.Temperature}}<br>
+cloud amount<br>
+wind speed, {{.Units.WindSpeed}}<br>
+wind direction<br>
+snow, {{.Units.SnowAmount}}<br>
+rain<br>
+<br>
+Conditions:<br>
+LT - light<br>
+VLT - very light<br>
+HW - heavy<br>
+MOD - noderate<br>
+R - rain<br>
+RSH - rain showers<br>
+TS - thunderstorms<br>
+SN - snow<br>
+SNSH - snow showers<br>
+{{.Version}}<br>
+{{.Date}}<br>
+</body>
+</html>
