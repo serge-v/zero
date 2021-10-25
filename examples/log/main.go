@@ -7,15 +7,20 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/serge-v/zero"
 
+	_ "embed"
 	_ "time/tzdata"
 )
 
 var list []string
 var lastEmail time.Time
+
+//go:embed log_users~.txt
+var logUsers string
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	nyc, err := time.LoadLocation("America/New_York")
@@ -49,7 +54,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			text = err.Error()
 		}
-		if err := zero.Email("soilsensor", []string{"voilokov@gmail.com"}, "moisture", text); err != nil {
+		users := strings.Fields(logUsers)
+		if err := zero.Email("soilsensor", users, "moisture", text); err != nil {
 			log.Println("email error:", err)
 		}
 		lastEmail = time.Now()
