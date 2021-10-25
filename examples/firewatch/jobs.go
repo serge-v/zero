@@ -26,8 +26,7 @@ func startJobs() {
 
 	for tick := range ticker.C {
 		local := tick.In(loc)
-		h, m := local.Hour(), local.Minute()
-		log.Println("tick", h, m)
+		m := local.Minute()
 
 		if m == 7 {
 			text, latest, err := control44.GetIncidents()
