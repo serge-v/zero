@@ -2,3 +2,5 @@
 *~.*
 zerosrv
 cmd/testapp/zero-*/
+.cache
+audiofiles/

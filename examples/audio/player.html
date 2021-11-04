@@ -1,0 +1,62 @@
+{{define "player"}}
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@media only screen and (orientation: portrait) {
+}
+@media only screen and (orientation: landscape) {
+}
+button {
+    height: 80px;
+    width: 158px;
+    font-family: verdana;
+    font-size: 26px;
+    color: gray;
+    background-color: black;
+    box-shadow: none;
+    border: solid 1px green;
+}
+body{
+    margin: 0 0 0 0;
+    font-family: verdana;
+    font-size: 18px;
+    color: gray;
+    background-color: black;
+}
+#dirPane {
+    position: absolute;
+    top: 0px;
+}
+</style>
+</head>
+
+<script src="player.js"></script>
+<script>
+</script>
+<body onload="init()">
+<div id="mainPane">
+    <div>
+        <button id="btnPrev" onclick="playPrev()">PREV</button><button id="btnNext" onclick="playNext()">NEXT</button>
+        <button id="btnPlay" onclick="audio.play()">PLAY</button><button id="btnPause" onclick="audio.pause()">PAUSE</button>
+        <button id="btnVolumeDown" onclick="volumeDown()">VOL-</button><button id="btnVolumeUp" onclick="volumeUp()">VOL+</button>
+        <button id="btnBack" onclick="seekBack()">-30</button><button id="btnForward" onclick="seekForward()">+30</button>
+        <button id="btnStatus">--</button><button onclick="openDirPane()">DIR</button>
+    </div>
+    <div style="height:180px; width: 314px; border: solid 1px green" id="title"></div>
+</div>
+<div id="dirPane" style="display: none">
+{{range .Dirs -}}
+<button onclick="selectDir('{{.}}')">{{.}}</button>
+{{- end}}
+    <br>
+    <button onclick="openMainPane()">BACK</button>
+</div>
+
+<video id="audio" width="0" height="0"></video>
+
+</body>
+
+</html>
+{{end}}
