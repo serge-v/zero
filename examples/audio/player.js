@@ -16,10 +16,7 @@ function playPrev() {
     if (index < 0) {
         index = fileList.length - 1;
     }
-    btnPrev.style.color = 'lightGreen';
-    sleep(200).then(() => {
-        btnPrev.style.color = '';
-    });
+    blink(btnPrev);
     playIndex(index, false);
 }
 
@@ -29,10 +26,7 @@ function playNext() {
     if (index === fileList.length) {
         index = 0;
     }
-    btnNext.style.color = 'lightGreen';
-    sleep(200).then(() => {
-        btnNext.style.color = '';
-    });
+    blink(btnNext);
     playIndex(index, false);
 }
 

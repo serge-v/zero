@@ -56,7 +56,7 @@ var templates *template.Template
 
 func reloadTemplates(w http.ResponseWriter) {
 	var err error
-	templates, err = template.ParseFiles("player.html", "dir.html")
+	templates, err = template.ParseFiles("player.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -128,7 +128,7 @@ func main() {
 
 	var err error
 
-	templates, err = template.ParseFS(resourses, "player.html", "dir.html")
+	templates, err = template.ParseFS(resourses, "player.html")
 	if err != nil {
 		log.Fatal(err)
 	}
