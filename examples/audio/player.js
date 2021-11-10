@@ -2,6 +2,7 @@ var index = -1;
 var pos = -1;
 var volume = 30;
 var dir = '';
+var countdown = 0;
 
 function blink(btn) {
     btn.style.color = 'lightGreen';
@@ -133,6 +134,11 @@ function selectDir(name) {
     fetch("/files?dir="+dir).then(response => response.json()).then(data => listReceived(data, false));
 }
 
+function addTimer(seconds, btn) {
+    blink(btn);
+    countdown += seconds;
+}
+
 var oldpos = 0;
 
 function init() {
@@ -148,8 +154,20 @@ function init() {
     audio.addEventListener('timeupdate', (event) => {
         var newpos = parseInt(audio.currentTime.toFixed());
         if (newpos != pos) {
+            if (countdown > 0) {
+                countdown--;
+                if (countdown == 0) {
+                    audio.pause();
+                }
+            }
+
             pos = newpos;
-            btnStatus.innerText = pos + '/' + audio.duration.toFixed();
+            var msg = pos + '/' + audio.duration.toFixed();
+            if (countdown > 0) {
+                msg += '//' + (countdown/60).toFixed();
+            }
+
+            btnStatus.innerText = msg;
             localStorage.setItem(dir + '_position', pos);
         }
     });

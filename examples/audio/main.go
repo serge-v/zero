@@ -144,7 +144,7 @@ func main() {
 	http.HandleFunc("/files", handleFileList)
 	http.Handle("/audio/", http.StripPrefix("/audio/", http.FileServer(http.Dir(dir))))
 
-	log.Println("starting")
+	log.Println("starting on 8101")
 	if err := http.ListenAndServe("127.0.0.1:8101", nil); err != nil {
 		log.Fatal(err)
 	}

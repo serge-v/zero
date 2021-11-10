@@ -63,14 +63,12 @@ body{
         </div>
     </div>
     <div id="dirPane" style="display: none">
+        <button onclick="addTimer(600, this)">10 MIN</button>
+        <button onclick="openMainPane()">BACK</button>
+
     {{range .Dirs -}}
     <button onclick="selectDir('{{.}}')">{{.}}</button>
     {{- end}}
-        <br>
-        <button onclick="setTimer(5)">TMR+5</button><button onclick="setTimer(15)">TMR+15</button>
-        <button onclick="setTimer(30)">TMR+30</button>
-        <br>
-        <button onclick="openMainPane()">BACK</button>
     </div>
 </div>
 
