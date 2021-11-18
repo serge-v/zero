@@ -54,6 +54,9 @@ func getFiles(subdir string) ([]fs.FileInfo, error) {
 var resourses embed.FS
 var templates *template.Template
 
+//go:embed login_token~.txt
+var loginToken string
+
 func reloadTemplates(w http.ResponseWriter) {
 	var err error
 	templates, err = template.ParseFiles("player.html")
@@ -120,6 +123,27 @@ func handleFileList(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "[\n"+strings.Join(fnames, ",\n")+"\n]\n")
 }
 
+func authHandler(next http.Handler) http.Handler {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		if token != "" && loginToken == token {
+			c := http.Cookie{Name: "token", Value: token}
+			http.SetCookie(w, &c)
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+
+		c, err := r.Cookie("token")
+		if err != nil || c.Value != loginToken {
+			http.Error(w, "invalid cookie", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(f)
+}
+
 var debug = flag.Bool("d", false, "debug")
 var dir = "/audiofiles/"
 
@@ -137,15 +161,17 @@ func main() {
 		dir = "." + dir
 	}
 
+	mux := http.NewServeMux()
+
 	res := http.FileServer(http.FS(resourses))
-	http.Handle("/favicon.ico", res)
-	http.Handle("/player.js", res)
-	http.HandleFunc("/", handlePlayer)
-	http.HandleFunc("/files", handleFileList)
-	http.Handle("/audio/", http.StripPrefix("/audio/", http.FileServer(http.Dir(dir))))
+	mux.Handle("/favicon.ico", res)
+	mux.Handle("/player.js", res)
+	mux.HandleFunc("/", handlePlayer)
+	mux.HandleFunc("/files", handleFileList)
+	mux.Handle("/audio/", http.StripPrefix("/audio/", http.FileServer(http.Dir(dir))))
 
 	log.Println("starting on 8101")
-	if err := http.ListenAndServe("127.0.0.1:8101", nil); err != nil {
+	if err := http.ListenAndServe("127.0.0.1:8101", authHandler(mux)); err != nil {
 		log.Fatal(err)
 	}
 }
