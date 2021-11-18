@@ -64,7 +64,7 @@ func Log() (string, error) {
 		return "", fmt.Errorf("read token: %w", err)
 	}
 
-	params := fmt.Sprintf("log?appname=%s&token=%s&port=%d", appname, token)
+	params := fmt.Sprintf("log?appname=%s&token=%s", appname, token)
 	resp, err := http.Get(durl + params)
 	if err != nil {
 		return "", fmt.Errorf("post to %s: %w", durl, err)
