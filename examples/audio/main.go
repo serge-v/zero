@@ -123,6 +123,24 @@ func handleFileList(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "[\n"+strings.Join(fnames, ",\n")+"\n]\n")
 }
 
+func handleSongList(w http.ResponseWriter, r *http.Request) {
+	subdir := r.URL.Query().Get("dir")
+	files, err := getFiles(subdir)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var fnames []string
+	for _, f := range files {
+		if filepath.Ext(f.Name()) != ".mp3" && filepath.Ext(f.Name()) != ".webm" {
+			continue
+		}
+		fnames = append(fnames, f.Name())
+	}
+	io.WriteString(w, strings.Join(fnames, "<hr>\n"))
+}
+
 func authHandler(next http.Handler) http.Handler {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
@@ -168,6 +186,7 @@ func main() {
 	mux.Handle("/player.js", res)
 	mux.HandleFunc("/", handlePlayer)
 	mux.HandleFunc("/files", handleFileList)
+	mux.HandleFunc("/songlist", handleSongList)
 	mux.Handle("/audio/", http.StripPrefix("/audio/", http.FileServer(http.Dir(dir))))
 
 	log.Println("starting on 8101")

@@ -120,6 +120,7 @@ function openDirPane() {
 
 function openMainPane() {
     dirPane.style.display = 'none';
+    listPane.style.display = 'none';
     mainPane.style.display = '';
 }
 
@@ -187,4 +188,18 @@ function init() {
         }
         fetch("/files?dir="+dir).then(response => response.json()).then(data => listReceived(data, true));
     }
+}
+
+function openListPane() {
+    mainPane.style.display = 'none';
+    listPane.style.display = '';
+}
+
+function fillList(data) {
+    songList.innerHTML = data;
+}
+
+function showList() {
+    openListPane();
+    fetch("/songlist?dir="+dir).then(response=>response.text()).then(t => fillList(t));
 }
