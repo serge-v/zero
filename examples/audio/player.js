@@ -1,6 +1,6 @@
 var index = -1;
 var pos = -1;
-var volume = 30;
+var volume = 70;
 var dir = '';
 var countdown = 0;
 
