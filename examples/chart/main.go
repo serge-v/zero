@@ -120,19 +120,27 @@ func generateChart(w io.Writer) error {
 	}
 
 	var ygrid []chart.GridLine
+
 	st := chart.Style{DotWidth: 1, DotColor: chart.ColorBlue, StrokeWidth: chart.Disabled}
+	lowHumidity := chart.Style{StrokeWidth: 3, StrokeColor: chart.ColorRed}
+
 	for i := 300; i < 800; i += 50 {
 		ygrid = append(ygrid, chart.GridLine{Value: float64(i)})
 		ygrid = append(ygrid, chart.GridLine{Value: float64(i + 25), Style: st})
 	}
+	ygrid = append(ygrid, chart.GridLine{Value: 525, Style: lowHumidity})
 
 	var yticks []chart.Tick
 	for i := 300; i < 800; i += 50 {
-		yticks = append(yticks, chart.Tick{Value: float64(i), Label: fmt.Sprintf("%d", i)})
+		//		yticks = append(yticks, chart.Tick{Value: float64(i), Label: fmt.Sprintf("%d", i)})
 	}
 
+	yticks = append(yticks, chart.Tick{Value: 625, Label: "high"})
+	yticks = append(yticks, chart.Tick{Value: 575, Label: "norm"})
+	yticks = append(yticks, chart.Tick{Value: 525, Label: "low"})
+
 	graph := chart.Chart{
-		DPI: 96,
+		DPI: 144,
 		Series: []chart.Series{
 			chart.TimeSeries{
 				XValues: xvalues,
