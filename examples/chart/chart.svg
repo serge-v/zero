@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="border: solid 1px lightskyblue" width="880" height="440">
+    <style>
+        svg text {font-family: sans-serif; font-size:14px; text-anchor:middle}
+        .sf {font-family: sans-serif; font-size:10px; text-anchor:middle}
+        .wide {stroke-width: 4}
+        .midnight {stroke:black; stroke-width: 4}
+        .noon {stroke:pink; stroke-width: 8}
+        .mhor {stroke:blue; stroke-width:3}
+        .mver {stroke:blue; stroke-width:12}
+    </style>
+
+    <text x="60" y="180">high</text>
+    <text x="60" y="230">normal</text>
+    <text x="60" y="280">low</text>
+
+    <g transform="translate(840,414)">
+        <text x="0" y="0">{{index .DayLabels 0}}</text>
+        <text x="-144" y="0">{{index .DayLabels 1}}</text>
+        <text x="-288" y="0">{{index .DayLabels 2}}</text>
+        <text x="-432" y="0">{{index .DayLabels 3}}</text>
+        <text x="-576" y="0">{{index .DayLabels 4}}</text>
+        <text x="-720" y="0">{{index .DayLabels 5}}</text>
+
+        <text x="-72" y="0" class="sf">12</text>
+        <text x="-216" y="0" class="sf">12</text>
+        <text x="-360" y="0" class="sf">12</text>
+        <text x="-504" y="0" class="sf">12</text>
+        <text x="-648" y="0" class="sf">12</text>
+
+        <text x="-36" y="0" class="sf">18</text>
+        <text x="-180" y="0" class="sf">18</text>
+        <text x="-324" y="0" class="sf">18</text>
+        <text x="-468" y="0" class="sf">18</text>
+        <text x="-612" y="0" class="sf">18</text>
+
+        <text x="-108" y="0" class="sf">6</text>
+        <text x="-252" y="0" class="sf">6</text>
+        <text x="-396" y="0" class="sf">6</text>
+        <text x="-540" y="0" class="sf">6</text>
+        <text x="-684" y="0" class="sf">6</text>
+    </g>
+
+    <g transform="translate(840,800) scale(-0.1,-1)">
+        <line x1="0" y1="525" x2="7200" y2="525" style="stroke:pink" class="wide"/>
+        <line x1="0" y1="575" x2="7200" y2="575" style="stroke:lightgreen" class="wide"/>
+        <line x1="0" y1="625" x2="7200" y2="625" style="stroke:orange" class="wide"/>
+
+        <line x1="0" y1="400" x2="7200" y2="400" style="stroke:gray"/>
+        <line x1="0" y1="400" x2="0" y2="700" style="stroke:gray"/>
+        <line x1="7200" y1="400" x2="7200" y2="700" style="stroke:gray"/>
+        <line x1="0" y1="700" x2="7200" y2="700" style="stroke:gray"/>
+
+        <line x1="0" y1="400" x2="0" y2="700" class="midnight"/>
+        <line x1="1440" y1="400" x2="1440" y2="700" class="midnight"/>
+        <line x1="2880" y1="400" x2="2880" y2="700" class="midnight"/>
+        <line x1="4320" y1="400" x2="4320" y2="700" class="midnight"/>
+        <line x1="5760" y1="400" x2="5760" y2="700" class="midnight"/>
+        <line x1="7200" y1="400" x2="7200" y2="700" class="midnight"/>
+
+        <!-- noon -->
+        <line x1="720" y1="400" x2="720" y2="700" class="noon"/>
+        <line x1="2160" y1="400" x2="2160" y2="700" class="noon"/>
+        <line x1="3600" y1="400" x2="3600" y2="700" class="noon"/>
+        <line x1="5040" y1="400" x2="5040" y2="700" class="noon"/>
+        <line x1="6480" y1="400" x2="6480" y2="700" class="noon"/>
+
+        <!-- 6AM -->
+        <line x1="360" y1="400" x2="360" y2="700" class="noon"/>
+        <line x1="2520" y1="400" x2="2520" y2="700" class="noon"/>
+        <line x1="3960" y1="400" x2="3960" y2="700" class="noon"/>
+        <line x1="5400" y1="400" x2="5400" y2="700" class="noon"/>
+        <line x1="6840" y1="400" x2="6840" y2="700" class="noon"/>
+
+        <!-- 6PM -->
+        <line x1="1080" y1="400" x2="1080" y2="700" class="noon"/>
+        <line x1="1800" y1="400" x2="1800" y2="700" class="noon"/>
+        <line x1="3240" y1="400" x2="3240" y2="700" class="noon"/>
+        <line x1="4680" y1="400" x2="4680" y2="700" class="noon"/>
+        <line x1="6120" y1="400" x2="6120" y2="700" class="noon"/>
+
+        <!-- line -->
+
+        {{range .Lines -}}
+        <line x1="{{.X1}}" y1="{{.Y1}}" x2="{{.X2}}" y2="{{.Y2}}" class="{{.Class}}"/>
+        {{end}}
+
+        
+    </g>
+</svg>

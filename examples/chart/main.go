@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 	"time"
 
 	"github.com/serge-v/zero"
@@ -21,9 +22,10 @@ var standalone = flag.Bool("standalone", false, "")
 
 func main() {
 	flag.Parse()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	if *standalone {
-		if err := saveChart("1.png"); err != nil {
+		if err := saveChart("sensor1", "1.png"); err != nil {
 			log.Fatal(err)
 		}
 		return
@@ -38,6 +40,7 @@ func main() {
 
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/chart.png", handleChart)
+	http.HandleFunc("/chart.svg", handleSVGChart)
 	http.HandleFunc("/data.csv", handleCsv)
 	http.HandleFunc("/events.csv", handleEvents)
 
@@ -54,8 +57,18 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleChart(w http.ResponseWriter, r *http.Request) {
+	fname := r.URL.Query().Get("f")
 	w.Header().Set("Content-Type", "image/png")
-	generateChart(w)
+	generateChart(w, fname)
+}
+
+func handleSVGChart(w http.ResponseWriter, r *http.Request) {
+	fname := r.URL.Query().Get("f")
+	log.Println("chart svg")
+	w.Header().Set("Content-Type", "image/svg+xml")
+	if err := generateSVGChart(w, fname); err != nil {
+		log.Println(err)
+	}
 }
 
 func handleEvents(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +83,8 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCsv(w http.ResponseWriter, r *http.Request) {
-	lines, err := fetchSensorLog()
+	fname := r.URL.Query().Get("f")
+	lines, err := fetchSensorLog(fname)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -82,26 +96,27 @@ func handleCsv(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	fmt.Fprint(w, "time,moisture,battery,hall\n")
 	for _, r := range records {
 		fmt.Fprint(w, r.ts.Add(time.Hour*4).Format(time.RFC3339), ",", r.moisture, ",", fmt.Sprintf("%.2f", r.battery), ",", r.hall, "\n")
 	}
 }
 
-func saveChart(fname string) error {
-	f, err := os.Create(fname)
+func saveChart(fname, outfname string) error {
+	f, err := os.Create(outfname)
 	if err != nil {
 		return fmt.Errorf("save: %w", err)
 	}
 	defer f.Close()
-	if err := generateChart(f); err != nil {
+	if err := generateChart(f, fname); err != nil {
 		return fmt.Errorf("generate: %w", err)
 	}
 	return nil
 }
 
-func generateChart(w io.Writer) error {
-	lines, err := fetchSensorLog()
+func generateChart(w io.Writer, fname string) error {
+	lines, err := fetchSensorLog(fname)
 	if err != nil {
 		return fmt.Errorf("fetch: %w", err)
 	}
@@ -172,5 +187,81 @@ func generateChart(w io.Writer) error {
 	if err := graph.Render(chart.PNG, w); err != nil {
 		return fmt.Errorf("render: %w", err)
 	}
+	return nil
+}
+
+func generateSVGChart(w io.Writer, fname string) error {
+	lines, err := fetchSensorLog(fname)
+	if err != nil {
+		return fmt.Errorf("fetch: %w", err)
+	}
+
+	/*
+		buf, err := ioutil.ReadFile("sensor.log")
+		if err != nil {
+			return fmt.Errorf("read sensor log: %w", err)
+		}
+	*/
+	//	lines = strings.Split(string(buf), "\n")
+
+	records, err := parseLogLines(lines)
+	if err != nil {
+		return fmt.Errorf("parse: %w", err)
+	}
+
+	type line struct {
+		X1, Y1, X2, Y2 int
+		Class          string
+	}
+
+	type data struct {
+		Lines     []line
+		DayLabels []string
+		Polyline  string
+	}
+
+	d := data{}
+	year, month, day := time.Now().Add(time.Hour * 24).Date()
+	start := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+
+	for i := 0; i <= 5; i++ {
+		ts := start.Add(time.Duration(-i) * time.Hour * 24).Format("1/2")
+		d.DayLabels = append(d.DayLabels, ts)
+	}
+
+	if len(records) > 110 {
+		records = records[len(records)-110:]
+
+	}
+
+	var prev line
+
+	for i, r := range records {
+		var ln line
+
+		ln.X1 = int(start.Sub(r.ts).Minutes()) + 240
+		ln.X2 = ln.X1 + 60
+		ln.Y1 = r.moisture
+		ln.Y2 = r.moisture
+		ln.Class = "mhor"
+
+		if i > 0 {
+			ln2 := line{X1: prev.X1, X2: prev.X1, Y1: prev.Y1, Y2: ln.Y1, Class: "mver"}
+			d.Lines = append(d.Lines, ln2)
+		}
+
+		d.Lines = append(d.Lines, ln)
+		prev = ln
+	}
+
+	t, err := template.ParseFiles("chart.svg")
+	if err != nil {
+		return fmt.Errorf("parse template: %w", err)
+	}
+
+	if err := t.Execute(w, d); err != nil {
+		return fmt.Errorf("execute: %w", err)
+	}
+
 	return nil
 }

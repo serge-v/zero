@@ -16,8 +16,8 @@ type record struct {
 	hall     int
 }
 
-func fetchSensorLog() ([]string, error) {
-	resp, err := http.Get("https://zero.voilokov.com/log/moisture.log")
+func fetchSensorLog(fname string) ([]string, error) {
+	resp, err := http.Get("https://zero.voilokov.com/log?f=" + fname)
 	if err != nil {
 		return nil, fmt.Errorf("generate: %w", err)
 	}
