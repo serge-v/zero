@@ -136,8 +136,11 @@ func handleSongList(w http.ResponseWriter, r *http.Request) {
 		if filepath.Ext(f.Name()) != ".mp3" && filepath.Ext(f.Name()) != ".webm" {
 			continue
 		}
-		fnames = append(fnames, f.Name())
+		fname := strings.TrimSuffix(f.Name(), ".mp3")
+		fname = strings.TrimSuffix(fname, ".web,")
+		fnames = append(fnames, fname)
 	}
+	w.Header().Set("Content-Type", "text/html")
 	io.WriteString(w, strings.Join(fnames, "<hr>\n"))
 }
 
