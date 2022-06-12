@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -22,47 +22,48 @@ var lastEmail time.Time
 //go:embed log_users~.txt
 var logUsers string
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func appendLog(fname, s string) error {
 	nyc, err := time.LoadLocation("America/New_York")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
+	msg := time.Now().In(nyc).Format("2006-01-02 15:04:05 MST ") + s
+	list = append(list, msg)
+	f, err := os.OpenFile("/data/moisture.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	n, err := fmt.Fprintln(f, msg)
+	log.Println("written", msg, n)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func handleAppendLog(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("m")
+	fname := r.URL.Query().Get("f")
+	logfname := "/data/" + fname + ".log"
+	if fname == "" {
+		logfname = "/data/sensor1.log"
+	}
+
+	logfname = filepath.Clean(logfname)
+
 	if msg != "" {
-		msg = time.Now().In(nyc).Format("2006-01-02 15:04:05 MST ") + msg
-		list = append(list, msg)
-		f, err := os.OpenFile("/data/moisture.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
+		if err := appendLog(logfname, msg); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer f.Close()
-		n, err := fmt.Fprintln(f, msg)
-		log.Println("written", msg, n)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		if fname == "" {
+			if err := appendLog("/data/moisture.log", msg); err != nil { // TODO: remove after all sensor are upgraded
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
-		f.Close()
-	}
-
-	if len(list) > 0 && time.Since(lastEmail) > time.Hour {
-		text := list[len(list)-1]
-		text, err := url.QueryUnescape(text)
-		if err != nil {
-			text = err.Error()
-		}
-		users := strings.Fields(logUsers)
-		if err := zero.Email("soilsensor", users, "moisture", text); err != nil {
-			log.Println("email error:", err)
-		}
-		lastEmail = time.Now()
-	}
-
-	for i := len(list) - 1; i >= 0; i-- {
-		fmt.Fprintln(w, list[i])
 	}
 }
 
@@ -78,11 +79,54 @@ func main() {
 		return
 	}
 
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", handleAppendLog)
 	http.HandleFunc("/moisture.log", handleLog)
+	http.HandleFunc("/log", handleSensorLog)
 
+	log.Println("starting on http://127.0.0.1:8095")
 	if err := http.ListenAndServe("127.0.0.1:8095", nil); err != nil {
 		log.Fatal(err)
+	}
+}
+func readLastLines(fname string) ([]string, error) {
+	f, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	f.Seek(-50000, os.SEEK_END)
+
+	buf := make([]byte, 50000)
+	n, err := f.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("read", fname, n)
+
+	lines := strings.Split(string(buf[:n]), "\n")
+	if len(lines) > 0 {
+		lines = lines[1:]
+	}
+	if len(lines) > 500 {
+		lines = lines[len(lines)-500:]
+	}
+
+	return lines, nil
+}
+
+func handleSensorLog(w http.ResponseWriter, r *http.Request) {
+	fname := r.URL.Query().Get("f")
+	logfname := "/data/" + fname + ".log"
+	logfname = filepath.Clean(logfname)
+	lines, err := readLastLines(logfname)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for _, ln := range lines {
+		fmt.Fprintln(w, ln)
 	}
 }
 
