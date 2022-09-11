@@ -28,15 +28,16 @@ func appendLog(fname, s string) error {
 		return err
 	}
 
+	logfname := filepath.Clean("/data/" + fname + ".log")
 	msg := time.Now().In(nyc).Format("2006-01-02 15:04:05 MST ") + s
 	list = append(list, msg)
-	f, err := os.OpenFile("/data/moisture.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(logfname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	n, err := fmt.Fprintln(f, msg)
-	log.Println("written", msg, n)
+	log.Println("written", msg, n, "to", logfname)
 	if err != nil {
 		return err
 	}
@@ -46,20 +47,17 @@ func appendLog(fname, s string) error {
 func handleAppendLog(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("m")
 	fname := r.URL.Query().Get("f")
-	logfname := "/data/" + fname + ".log"
 	if fname == "" {
-		logfname = "/data/sensor1.log"
+		fname = "sensor1"
 	}
 
-	logfname = filepath.Clean(logfname)
-
 	if msg != "" {
-		if err := appendLog(logfname, msg); err != nil {
+		if err := appendLog(fname, msg); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if fname == "" {
-			if err := appendLog("/data/moisture.log", msg); err != nil { // TODO: remove after all sensor are upgraded
+			if err := appendLog("moisture", msg); err != nil { // TODO: remove after all sensor are upgraded
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}

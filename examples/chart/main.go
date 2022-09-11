@@ -44,6 +44,8 @@ func main() {
 	http.HandleFunc("/data.csv", handleCsv)
 	http.HandleFunc("/events.csv", handleEvents)
 
+	log.Println("starting on http://127.0.0.1:8096")
+
 	if err := http.ListenAndServe("127.0.0.1:8096", nil); err != nil {
 		log.Fatal(err)
 	}
@@ -51,6 +53,9 @@ func main() {
 
 //go:embed main.html
 var mainPage string
+
+//go:embed chart.svg
+var chartTemplate string
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, mainPage)
@@ -222,7 +227,12 @@ func generateSVGChart(w io.Writer, fname string) error {
 
 	d := data{}
 	year, month, day := time.Now().Add(time.Hour * 24).Date()
-	start := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return err
+	}
+
+	start := time.Date(year, month, day, 0, 0, 0, 0, loc)
 
 	for i := 0; i <= 5; i++ {
 		ts := start.Add(time.Duration(-i) * time.Hour * 24).Format("1/2")
@@ -231,7 +241,6 @@ func generateSVGChart(w io.Writer, fname string) error {
 
 	if len(records) > 110 {
 		records = records[len(records)-110:]
-
 	}
 
 	var prev line
@@ -239,11 +248,17 @@ func generateSVGChart(w io.Writer, fname string) error {
 	for i, r := range records {
 		var ln line
 
-		ln.X1 = int(start.Sub(r.ts).Minutes()) + 240
+		if r.moisture < 410 {
+			r.moisture = 410
+		}
+
+		ln.X1 = int(start.Sub(r.ts).Minutes()) - 240
 		ln.X2 = ln.X1 + 60
 		ln.Y1 = r.moisture
 		ln.Y2 = r.moisture
 		ln.Class = "mhor"
+
+		println("=== ", start.String(), r.ts.UTC().String(), ln.X1)
 
 		if i > 0 {
 			ln2 := line{X1: prev.X1, X2: prev.X1, Y1: prev.Y1, Y2: ln.Y1, Class: "mver"}
@@ -254,7 +269,14 @@ func generateSVGChart(w io.Writer, fname string) error {
 		prev = ln
 	}
 
-	t, err := template.ParseFiles("chart.svg")
+	var t *template.Template
+
+	_, err = os.Stat("chart.svg")
+	if err != nil {
+		t, err = template.New("").Parse(chartTemplate)
+	} else {
+		t, err = template.ParseFiles("chart.svg")
+	}
 	if err != nil {
 		return fmt.Errorf("parse template: %w", err)
 	}

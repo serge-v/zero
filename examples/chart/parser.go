@@ -17,7 +17,7 @@ type record struct {
 }
 
 func fetchSensorLog(fname string) ([]string, error) {
-	resp, err := http.Get("https://zero.voilokov.com/log?f=" + fname)
+	resp, err := http.Get("https://zero.voilokov.com/log/log?f=" + fname)
 	if err != nil {
 		return nil, fmt.Errorf("generate: %w", err)
 	}
